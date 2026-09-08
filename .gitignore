@@ -74,3 +74,6 @@ dl/
 .ccache/
 .buildroot-src/
 *.img
+
+# host-side build artifacts
+.host-tools/

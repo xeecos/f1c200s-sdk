@@ -30,8 +30,15 @@ SD 卡插回板卡上电，串口（UART0, 115200）即可看到 u-boot 与 Linu
 
 ```bash
 make fel-images                 # 生成 FEL 用 rootfs ramdisk
-./scripts/fel-ram-boot.sh       # 需本机 sunxi-fel；macOS: brew install sunxi-tools
+make fel-tools                  # 宿主机编译 sunxi-fel（仅首次，macOS 需此步）
+./scripts/fel-ram-boot.sh       # 经 USB FEL 模式启动
 ```
+
+> 说明：Homebrew 没有 sunxi-tools formula。`make fel-tools` 会在宿主机
+> 用源码编译（依赖 Xcode CLT + `brew install libusb dtc`），产物在
+> `.host-tools/sunxi-tools/sunxi-fel`（也可 `sudo cp` 到 /usr/local/bin）。
+> Linux 可直接 `sudo apt install sunxi-tools`；本 SDK 的 Docker 镜像内也
+> 自带 sunxi-fel（Linux 宿主机可把 `/dev/bus/usb` 挂进容器使用）。
 
 流程：拔掉 SD/SPI 介质（或按板卡方式强制 FEL）→ 板卡 USB 连电脑 → 上电后
 `lsusb` 出现 `1f3a:efe8` → 执行脚本 → u-boot 自动把 Linux 从 DDR 启动。
@@ -54,6 +61,7 @@ make fel-images                 # 生成 FEL 用 rootfs ramdisk
 └── scripts/
     ├── make-sdcard.sh        # 合成 sdcard.img（容器内）
     ├── make-fel-images.sh    # rootfs.cpio.gz -> bootz ramdisk uImage
+    ├── fel-tools.sh          # 宿主机编译 sunxi-fel（macOS，Homebrew 无 formula）
     ├── deploy-sd.sh          # 写 SD 卡（宿主机）
     └── fel-ram-boot.sh       # FEL USB RAM 启动（宿主机）
 ```

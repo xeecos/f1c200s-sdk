@@ -12,8 +12,9 @@
 # 前置条件:
 #   - 先 make build fel-images 生成产物
 #   - 板上无 SD/SPI 可启动介质(或按板卡方式强制 FEL, 详见 README)
-#   - 本机有 sunxi-fel: macOS `brew install sunxi-tools`;
-#     Linux 可 `apt install sunxi-tools` 或使用本 SDK 容器 (--privileged)
+#   - 本机有 sunxi-fel:
+#       Linux: sudo apt install sunxi-tools (或使用本 SDK 容器, 镜像内含)
+#       macOS: Homebrew 无 formula, 执行 ./scripts/fel-tools.sh 源码编译
 #
 # 用法:
 #   ./scripts/fel-ram-boot.sh
@@ -35,8 +36,8 @@ ADDR_ENV=0x80C50000
 # --- 工具 & 产物检查 ---
 if [ -z "$FEL_TOOL" ]; then
   echo "错误: 找不到 sunxi-fel" >&2
-  echo "   macOS : brew install sunxi-tools" >&2
   echo "   Linux : sudo apt install sunxi-tools" >&2
+  echo "   macOS : ./scripts/fel-tools.sh (Homebrew 无 formula, 源码编译)" >&2
   echo "   或设置 FEL_TOOL=/路径/sunxi-fel" >&2
   exit 1
 fi
