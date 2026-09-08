@@ -34,7 +34,12 @@ case "$(uname)" in
     ;;
   Linux)
     echo "==> Linux 建议直接用发行版包: sudo apt install sunxi-tools" >&2
-    echo "    (也可以继续用本脚本编译: 需 libusb-1.0-0-dev libfdt-dev pkg-config)" >&2
+    echo "    (继续用本脚本编译需 libusb-1.0-0-dev libfdt-dev pkg-config 等)" >&2
+    if ! pkg-config --exists libusb-1.0 libfdt 2>/dev/null; then
+      echo "错误: 缺少编译依赖 (libusb-1.0 / libfdt 开发包)" >&2
+      echo "   Debian/Ubuntu: sudo apt install libusb-1.0-0-dev libfdt-dev pkg-config" >&2
+      exit 1
+    fi
     ;;
   *)
     echo "不支持的系统: $(uname)" >&2

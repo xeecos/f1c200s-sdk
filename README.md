@@ -36,9 +36,13 @@ make fel-tools                  # 宿主机编译 sunxi-fel（仅首次，macOS 
 
 > 说明：Homebrew 没有 sunxi-tools formula。`make fel-tools` 会在宿主机
 > 用源码编译（依赖 Xcode CLT + `brew install libusb dtc`），产物在
-> `.host-tools/sunxi-tools/sunxi-fel`（也可 `sudo cp` 到 /usr/local/bin）。
+> `.host-tools/sunxi-tools/sunxi-fel`（目录已 gitignore，删除后重跑
+> `make fel-tools` 即可重建；也可 `sudo cp` 到 /usr/local/bin）。
 > Linux 可直接 `sudo apt install sunxi-tools`；本 SDK 的 Docker 镜像内也
 > 自带 sunxi-fel（Linux 宿主机可把 `/dev/bus/usb` 挂进容器使用）。
+>
+> ✅ 已验证：macOS (Apple Silicon) 上 `make fel-tools` 编译通过，
+> sunxi-fel (d7bbd17) 可正常运行、枚举 FEL 设备。
 
 流程：拔掉 SD/SPI 介质（或按板卡方式强制 FEL）→ 板卡 USB 连电脑 → 上电后
 `lsusb` 出现 `1f3a:efe8` → 执行脚本 → u-boot 自动把 Linux 从 DDR 启动。
