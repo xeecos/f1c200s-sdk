@@ -77,3 +77,8 @@ dl/
 
 # host-side build artifacts
 .host-tools/
+
+# app 构建产物与 overlay 内容 (源码经 make app 生成)
+apps/*/out/
+board/f1c200s/rootfs-overlay/*
+!board/f1c200s/rootfs-overlay/.gitkeep

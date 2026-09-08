@@ -55,6 +55,8 @@ BR2_TARGET_ROOTFS_CPIO_GZIP=y
 
 # ---- 系统基础 ----
 BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV=y
+# rootfs overlay: apps/ 编译产物经 `make app` 装入此目录, 随镜像发布
+BR2_ROOTFS_OVERLAY="$(BR2_EXTERNAL_F1C200S_SDK_PATH)/board/f1c200s/rootfs-overlay"
 BR2_TARGET_GENERIC_HOSTNAME="f1c200s"
 BR2_TARGET_GENERIC_ISSUE="Welcome to f1c200s (licheepi-nano style) Linux"
 BR2_TARGET_GENERIC_GETTY=y

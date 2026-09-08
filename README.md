@@ -125,6 +125,58 @@ commit 固定，行为不会漂移。若你只需 SPI NOR 烧写，可参考上�
    bootcmd 里定义了 bootz 的加载地址）；
 4. u-boot 启动后按 bootcmd 自动 bootz，Linux 以 initramfs（cpio.gz）方式运行。
 
+## 开发自己的程序
+
+运行环境：ARM926EJ-S（armv5te，软浮点）、glibc、busybox rootfs；**板上无编译器，
+内核未开网络**，调试走串口（ttyS0@115200）。两种开发节奏：
+
+### 快速迭代（不重刷镜像）
+
+1. 写代码，例如 `hello.c`；在仓库根用 SDK 容器交叉编译（工具链在 Docker 卷内）：
+   ```bash
+   docker run --rm -v "$PWD:/work" -v f1c200s-out:/build-out -w /work f1c200s-env \
+     bash -lc '/build-out/host/bin/arm-buildroot-linux-gnueabi-gcc -o hello hello.c'
+   ```
+2. SD 卡插到电脑：第一分区（卷名 `BOOT`，FAT）mac/Windows 可直接读写，把 `hello` 拷进去；
+3. 板子启动后（串口 root 登录）从 FAT 取用：
+   ```sh
+   mount /dev/mmcblk0p1 /mnt && cp /mnt/hello /usr/bin/ && chmod +x /usr/bin/hello
+   hello
+   ```
+   以后改代码 = 重编 + 覆盖 FAT 里的文件即可，SD 镜像不用重做。
+
+### 随镜像发布（make app 集成）
+
+仓库 `apps/` 下每个目录是一个程序（含一个可复用 Makefile 模板），
+`apps/hello` 是开箱示例：
+
+```bash
+make app              # 交叉编译 apps/* 并装入 rootfs overlay (只编一个: make app APP=hello)
+make build            # 增量重打包 rootfs (通常 1~3 分钟)
+make sdcard           # 重新合成 SD 镜像
+make deploy-sd DEV=/dev/diskX
+```
+
+- 新程序：`cp -r apps/hello apps/<名字>`，改源码即可（二进制名=目录名，模板自动
+  取目录名、通配 *.c）；
+- 产物经 `BR2_ROOTFS_OVERLAY`（指向 `board/f1c200s/rootfs-overlay`）打进 rootfs，
+  默认安装到 `/usr/bin`；
+- 需要动态库/数据文件时，在程序 Makefile 的 `install` 目标里多拷几行即可；
+- 需要多个程序共享代码、第三方库依赖或 menuconfig 管理时，可进一步把程序做成
+  BR2_EXTERNAL 软件包（本仓库根即外部树，`external.mk`/`Config.in` 已预留）。
+
+> 注：`board/f1c200s/rootfs-overlay/.gitkeep` 仅用于让空目录进入版本库，
+> 它会被原样拷进 rootfs 根目录（0 字节，无害）；介意可删，但删后请先
+> `make app` 建目录再 `make build`（否则目录不存在会构建失败）。
+
+### 板上调试提示
+
+- GPIO：内核支持 sysfs 接口（`/sys/class/gpio`），可先 `echo` 点亮 LED 验证环境；
+- LCD/音频：内核带 sun4i DRM 与 codec 驱动，需在 `linux-menuconfig` 中按你的
+  屏参/声卡确认后启用；
+- 内核模块：需 `linux-menuconfig` 打开 `CONFIG_MODULES`，且模块必须与当前内核
+  同一次构建（见 buildroot 的 linux-rebuild 流程）；改内核后 `make build` 即可。
+
 ## 常用命令
 
 ```bash
