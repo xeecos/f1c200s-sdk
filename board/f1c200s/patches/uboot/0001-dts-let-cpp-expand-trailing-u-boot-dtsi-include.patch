@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: f1c200s-sdk <sdk@localhost>
+Date: Tue, 8 Sep 2026 00:00:00 +0000
+Subject: [PATCH] dts: let cpp expand the trailing u-boot.dtsi include
+
+cmd_dtc appends a U-Boot-specific include line to the preprocessed dts
+stream by echoing '\#include "..."'. The backslash prevents GNU cpp from
+recognizing it as a directive, so the literal text (with backslash)
+reaches dtc, which aborts with a syntax error (modern cpp keeps the
+backslash; older preprocessors stripped it, which is why this used to
+work). Emit an unescaped '#include' so cpp expands the file and dtc
+receives the final merged tree.
+
+Signed-off-by: f1c200s-sdk <sdk@localhost>
+---
+ scripts/Makefile.lib | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/scripts/Makefile.lib b/scripts/Makefile.lib
+index 8a18f7c83a6e..c6ef0d2f1b45 100644
+--- a/scripts/Makefile.lib
++++ b/scripts/Makefile.lib
+@@ -318,7 +318,7 @@ quiet_cmd_dtc = DTC     $@
+ # Modified for U-Boot
+ # Bring in any U-Boot-specific include at the end of the file
+ cmd_dtc = mkdir -p $(dir ${dtc-tmp}) ; \
+-	(cat $<; $(if $(u_boot_dtsi),echo '\#include "$(u_boot_dtsi)"')) > $(pre-tmp); \
++	(cat $<; $(if $(u_boot_dtsi),echo '#include "$(u_boot_dtsi)"')) > $(pre-tmp); \
+ 	$(CPP) $(dtc_cpp_flags) -x assembler-with-cpp -o $(dtc-tmp) $(pre-tmp) ; \
+ 	$(DTC) -O dtb -o $@ -b 0 \
+ 		-i $(dir $<) $(DTC_FLAGS) \

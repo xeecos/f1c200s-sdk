@@ -1,0 +1,15 @@
+# uEnv.txt — FEL RAM 启动时由 sunxi-fel 注入 u-boot 的环境变量
+#
+# 首行固定魔数 #=uEnv，sunxi-fel 据此识别并把它写入 SPL 头字段，
+# u-boot 启动后 (misc_init_r) 自动 env import 本文件内容。
+#
+# 内存布局（与 scripts/fel-ram-boot.sh 中的 sunxi-fel write 地址一致）:
+#   zImage    -> 0x80008000
+#   dtb       -> 0x80C00000
+#   rootfs    -> 0x80D00000  (rootfs.cpio.gz.uImage)
+#
+# 注意: 本文件内容为 u-boot 环境变量语法，每行 key=value；
+#       除魔数行外的 # 开头的行会被忽略。
+#=uEnv
+bootargs=console=ttyS0,115200 panic=5
+bootcmd=bootz 0x80008000 0x80d00000 0x80c00000

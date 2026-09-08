@@ -1,0 +1,56 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: f1c200s-sdk <sdk@localhost>
+Date: Tue, 8 Sep 2026 00:00:00 +0000
+Subject: [PATCH] sunxi: assemble u-boot-sunxi-with-spl.bin without binman
+
+The bundled binman is python2-only and cannot run on modern build
+hosts. Assemble the same image layout directly with a small helper
+(SPL + 0xff pad to CONFIG_SPL_PAD_TO + u-boot.img + 0xff pad to
+CONFIG_ENV_OFFSET).
+
+Signed-off-by: f1c200s-sdk <sdk@localhost>
+---
+diff --git a/Makefile b/Makefile
+--- a/Makefile
++++ b/Makefile
+@@ -1144,8 +1144,11 @@
+ endif
+ 
+ ifneq ($(CONFIG_ARCH_SUNXI),)
++# Assemble u-boot-sunxi-with-spl.bin without binman (the bundled binman is
++# python2-only and does not run on current build hosts). The layout mirrors
++# arch/arm/dts/sunxi-u-boot.dtsi; see tools/sunxi-mkwithspl.py.
+ u-boot-sunxi-with-spl.bin: spl/sunxi-spl.bin u-boot.img u-boot.dtb FORCE
+-	$(call if_changed,binman)
++	@python3 tools/sunxi-mkwithspl.py
+ endif
+ 
+ ifneq ($(CONFIG_TEGRA),)
+diff --git a/tools/sunxi-mkwithspl.py b/tools/sunxi-mkwithspl.py
+new file mode 100755
+--- /tmp/tmp3v5sdpm_/devnull	2026-09-08 21:23:12.579023280 +0000
+@@ -0,0 +1,24 @@
++#!/usr/bin/env python3
++"""Assemble u-boot-sunxi-with-spl.bin without binman (python2-era tool).
++
++Layout mirrors arch/arm/dts/sunxi-u-boot.dtsi:
++  [spl/sunxi-spl.bin][0xff pad to 32768 (CONFIG_SPL_PAD_TO)]
++  [u-boot.img][0xff pad to CONFIG_ENV_OFFSET]
++Run from the u-boot build directory (same layout binman would produce).
++"""
++import re
++import sys
++
++spl = open('spl/sunxi-spl.bin', 'rb').read()
++img = open('u-boot.img', 'rb').read()
++
++pad_to = 32768  # CONFIG_SPL_PAD_TO, see include/configs/sunxi-common.h
++m = re.search(r'CONFIG_ENV_OFFSET=(0x[0-9a-fA-F]+)', open('.config').read())
++env_off = int(m.group(1), 16) if m else 0x88000
++
++pad1 = pad_to - len(spl)
++if pad1 < 0 or pad_to + len(img) > env_off:
++    sys.exit('error: SPL/u-boot.img too large for the sunxi with-spl layout')
++out = spl + b'\xff' * pad1 + img + b'\xff' * (env_off - pad_to - len(img))
++open('u-boot-sunxi-with-spl.bin', 'wb').write(out)
++print('u-boot-sunxi-with-spl.bin: %d bytes' % len(out))

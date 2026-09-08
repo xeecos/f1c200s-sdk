@@ -1,0 +1,17 @@
+# u-boot kconfig 追加项（作用于 licheepi_nano_defconfig 之上）
+#
+# nano-v2018.01 的 licheepi_nano_defconfig 很短，部分选项依赖 Kconfig 默认；
+# 这里把 SD 卡启动与生成 u-boot-sunxi-with-spl.bin 所需选项显式化，避免随
+# Kconfig 漂移失效。注意: 该文件内选项在 "make licheepi_nano_defconfig" 之后
+# 以片段方式追加生效（buildroot 机制），与 defconfig 同优先级。
+
+# 显式要求默认 make 目标产出 u-boot-sunxi-with-spl.bin
+# (该 fork 里此文件由 binman 按 arch/arm/dts/sunxi-u-boot.dtsi 组装,
+#  但不在默认 ALL 目标里, 通过 BUILD_TARGET 使其进入默认构建)
+CONFIG_BUILD_TARGET="u-boot-sunxi-with-spl.bin"
+
+# SPL 需要从 SD/TF 卡原始扇区读取 u-boot 主体
+CONFIG_SPL_MMC_SUPPORT=y
+
+# 串口控制台 115200
+CONFIG_BOOTDELAY=2

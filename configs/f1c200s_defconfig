@@ -1,0 +1,62 @@
+# =============================================================================
+# f1c200s-sdk Buildroot 配置
+# 目标: Allwinner F1C100s/F1C200s (suniv, ARM926EJ-S)
+#
+# 上游源码（社区经典型 licheepi-nano 组合，可 SD 卡启动）:
+#   - 内核:   Lichee-Pi/linux   分支 nano-5.2-flash
+#   - u-boot: Lichee-Pi/u-boot  分支 nano-v2018.01
+# 两者均以 commit 固定（可复现），如需换版本改 BR2_*_CUSTOM_REPO_VERSION。
+# =============================================================================
+
+# ---- 架构: ARM926EJ-S, EABI 软浮点 ----
+BR2_arm=y
+BR2_arm926t=y
+
+# ---- 工具链: buildroot 内部工具链 (glibc), 头文件与所构建内核一致 ----
+BR2_TOOLCHAIN_BUILDROOT_GLIBC=y
+BR2_KERNEL_HEADERS_AS_KERNEL=y
+# 声明实际内核头文件系列为 5.2 (licheepi nano-5.2-flash), 否则 buildroot 按
+# 最新系列(6.1)校验头文件版本导致失败
+BR2_PACKAGE_HOST_LINUX_HEADERS_CUSTOM_5_2=y
+
+# ---- 构建加速: ccache (缓存目录 /work/.ccache, Makefile 注入) ----
+BR2_CCACHE=y
+
+# ---- Linux 内核 (licheepi nano 5.2-flash 分支) ----
+BR2_GLOBAL_PATCH_DIR="$(BR2_EXTERNAL_F1C200S_SDK_PATH)/board/f1c200s/patches"
+BR2_LINUX_KERNEL=y
+BR2_LINUX_KERNEL_CUSTOM_GIT=y
+BR2_LINUX_KERNEL_CUSTOM_REPO_URL="https://github.com/Lichee-Pi/linux.git"
+BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="05696d0119680f12afe74d70a26f8d35c208ba4a"
+BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG=y
+BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="$(BR2_EXTERNAL_F1C200S_SDK_PATH)/board/f1c200s/linux.config"
+BR2_LINUX_KERNEL_ZIMAGE=y
+BR2_LINUX_KERNEL_DTS_SUPPORT=y
+BR2_LINUX_KERNEL_INTREE_DTS_NAME="suniv-f1c100s-licheepi-nano"
+
+# ---- u-boot (licheepi nano-v2018.01 分支) ----
+BR2_TARGET_UBOOT=y
+BR2_TARGET_UBOOT_BUILD_SYSTEM_KCONFIG=y
+BR2_TARGET_UBOOT_CUSTOM_GIT=y
+BR2_TARGET_UBOOT_CUSTOM_REPO_URL="https://github.com/Lichee-Pi/u-boot.git"
+BR2_TARGET_UBOOT_CUSTOM_REPO_VERSION="013ca457fd64b72444a0f5f480b1bbdd8b7481eb"
+BR2_TARGET_UBOOT_BOARD_DEFCONFIG="licheepi_nano"
+BR2_TARGET_UBOOT_CONFIG_FRAGMENT_FILES="$(BR2_EXTERNAL_F1C200S_SDK_PATH)/board/f1c200s/uboot.fragment"
+BR2_TARGET_UBOOT_FORMAT_CUSTOM=y
+BR2_TARGET_UBOOT_FORMAT_CUSTOM_NAME="u-boot-sunxi-with-spl.bin"
+
+# ---- rootfs: ext4 (SD 卡主分区) + cpio.gz (FEL RAM 启动) ----
+BR2_TARGET_ROOTFS_EXT2=y
+BR2_TARGET_ROOTFS_EXT2_4=y
+BR2_TARGET_ROOTFS_EXT2_LABEL="rootfs"
+BR2_TARGET_ROOTFS_EXT2_SIZE="96M"
+BR2_TARGET_ROOTFS_CPIO=y
+BR2_TARGET_ROOTFS_CPIO_GZIP=y
+
+# ---- 系统基础 ----
+BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_MDEV=y
+BR2_TARGET_GENERIC_HOSTNAME="f1c200s"
+BR2_TARGET_GENERIC_ISSUE="Welcome to f1c200s (licheepi-nano style) Linux"
+BR2_TARGET_GENERIC_GETTY=y
+BR2_TARGET_GENERIC_GETTY_PORT="ttyS0"
+BR2_TARGET_GENERIC_GETTY_BAUDRATE_115200=y
